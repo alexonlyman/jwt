@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -26,9 +27,12 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "role_id")
     private RoleEntity role;
 
+    private int failedLoginAttempts;
+    private boolean accountNonLocked = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.getName()));
+        return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role.getName()));
     }
 
     @Override
@@ -41,5 +45,9 @@ public class UserEntity implements UserDetails {
         return username;
     }
 
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.accountNonLocked;
+    }
 
 }

@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -24,4 +26,27 @@ public class UserService implements UserDetailsService {
         assert user != null;
         return new User(user.getUsername(), user.getPassword(), user.getAuthorities());
     }
+
+    public List<UserEntity> getAll() {
+        return userRepo.findAll();
+    }
+
+    public UserEntity update(Integer id, UserEntity user) {
+        UserEntity userEntity = userRepo.findById(id).orElseThrow();
+        userEntity.setPassword(user.getPassword());
+        userEntity.setUsername(user.getUsername());
+        userEntity.setEmail(user.getEmail());
+        return userRepo.save(userEntity);
+    }
+
+    public UserEntity findUserById(Integer id) {
+        return userRepo.findById(id).orElseThrow();
+    }
+
+    public void unlockAccount(UserEntity user) {
+        user.setAccountNonLocked(true);
+        user.setFailedLoginAttempts(0);
+        userRepo.save(user);
+    }
+
 }

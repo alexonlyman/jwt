@@ -10,6 +10,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.AuthenticationManager;
 
+import javax.security.auth.login.AccountLockedException;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -48,7 +50,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLogin() {
+    void testLogin() throws AccountLockedException {
         UserEntity user = new UserEntity();
         user.setUsername("testuser");
 

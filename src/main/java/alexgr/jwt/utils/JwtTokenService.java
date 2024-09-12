@@ -1,5 +1,6 @@
 package alexgr.jwt.utils;
 
+import alexgr.jwt.user.Role;
 import io.jsonwebtoken.Claims;
 
 import io.jsonwebtoken.JwtException;
@@ -8,16 +9,16 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtTokenService {
@@ -25,6 +26,10 @@ public class JwtTokenService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
         return Jwts.builder()
                 .claims(claims)
                 .subject(userDetails.getUsername())
@@ -44,8 +49,14 @@ public class JwtTokenService {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
+
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        if ((username.equals(userDetails.getUsername()) && !isTokenExpired(token))) {
+            return true;
+        } else {
+            throw new JwtException("username name not equals or token has expired");
+        }
+
     }
 
     public String extractUsername(String token) {
@@ -55,8 +66,10 @@ public class JwtTokenService {
     public UserDetails extractUserDetails(String token) {
         Claims claims = extractAllClaims(token);
         String username = claims.getSubject();
-        // Здесь вы можете добавить логику для получения дополнительных данных пользователя из claims
-        return new User(username, "", new ArrayList<>()); // Пустой список прав доступа для примера
+        List<GrantedAuthority> authorities = ((List<?>) claims.get("roles")).stream()
+                .map(role -> new SimpleGrantedAuthority((String) role))
+                .collect(Collectors.toList());
+        return new User(username, "", authorities);
     }
 
     private Date extractExpiration(String token) {
